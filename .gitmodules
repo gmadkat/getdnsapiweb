@@ -1,0 +1,6 @@
+[submodule "getdns"]
+	path = getdns
+	url = https://github.com/getdnsapi/getdns
+[submodule "tnw2014"]
+	path = tnw2014
+	url = https://github.com/getdnsapi/tnw2014.git

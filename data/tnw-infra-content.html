@@ -1,0 +1,106 @@
+<h1>Supporting infrastructure</h1>
+
+<p>
+To assist in our hack battle we set up two secure delegation domains for each participant.
+The domain name is based on the first name of the participant.
+For example for a participant named Arthur Philip Dent, the domains are called <tt>arthur.getdnsapi.net</tt> and <tt>arthur.getdnsapi.org</tt>.
+</p>
+<p>
+To edit the zones you need to access our system over ssh on <tt>getdnsapi.net</tt>.
+User accounts are also based on first names.
+So Arthur would access the system with:
+<p><code>$ ssh arthur@getdnsapi.net</code></p>
+Access is by ssh key only.
+To authorize access for you, we need your public ssh key.
+</p>
+<p>
+In your home directory on our system you find a zones directory.
+Within it are the zone-files for your zone and a <tt>Makefile</tt>.
+To change the content of the zones you simply edit them and run <tt>make</tt>.
+The changed zones will then automatically be resigned and reloaded.
+</p>
+<p>
+The system will accept e-mail.
+To forward email to your e-mail system of choice simply create a <tt>.forward</tt> file in your home containing the address to forward e-mail to.
+</p>
+<h2>S/MIME and PGP Keys</h2>
+<p>
+To facilitate experimentation with DNSSEC provisioned S/MIME certificates and OpenPGP Keys, we have created <tt>CNAME</tt>'s in the parent <tt>getdnsapi.net</tt> and <tt>getdnsapi.org</tt> zones pointing to the delegated participant zones, so everybody can provision their own S/MIME certificate and OpenPGP key for the <tt>getdnsapi.net</tt> and <tt>getdnsapi.org</tt>.
+Following <a href="http://tools.ietf.org/html/draft-ietf-dane-smime-06">draft-ietf-dane-smime-06</a> and <a href="http://tools.ietf.org/html/draft-ietf-dane-openpgpkey-00">draft-ietf-dane-openpgpkey-00</a>, the following <tt>CNAME</tt>'s exist for each participant:
+</p>
+<p><code>
+<i>&lt;sha224 of first name&gt;</i>._smimecert.getdnsapi.net.  CNAME  smimecert.<i>&lt;first name&gt;</i>.getdnsapi.net.<br />
+<i>&lt;sha224 of first name&gt;</i>._smimecert.getdnsapi.org.  CNAME  smimecert.<i>&lt;first name&gt;</i>.getdnsapi.org.<br />
+<i>&lt;sha224 of first name&gt;</i>._openpgpkey.getdnsapi.net.  CNAME  openpgpkey.<i>&lt;first name&gt;</i>.getdnsapi.net.<br />
+<tt><i>&lt;sha224 of first name&gt;</i>._openpgpkey.getdnsapi.org.  CNAME  openpgpkey.<i>&lt;first name&gt;</i>.getdnsapi.org.<br />
+</code></p>
+<p>
+So for example if we would have Arthur Dent participating, we first calculate the SHA224 for <tt>arthur</tt> (lower case !):
+</p>
+<p><code>
+$ echo -n arthur | openssl sha -sha224</br>
+b5574a45d60955cc7307e0e929ea467653fa9a2a8657db29a3023c57
+</code></p>
+The <tt>CNAME</tt>'s for arthur will thus be:
+<p><code>
+b5574a45d60955cc7307e0e929ea467653fa9a2a8657db29a3023c57._smimecert.getdnsapi.net.  CNAME  smimecert.arthur.getdnsapi.net.<br />
+b5574a45d60955cc7307e0e929ea467653fa9a2a8657db29a3023c57._smimecert.getdnsapi.org.  CNAME  smimecert.arthur.getdnsapi.org.<br />
+b5574a45d60955cc7307e0e929ea467653fa9a2a8657db29a3023c57._openpgpkey.getdnsapi.net.  CNAME  openpgpkey.arthur.getdnsapi.net.<br />
+<tt>b5574a45d60955cc7307e0e929ea467653fa9a2a8657db29a3023c57._openpgpkey.getdnsapi.org.  CNAME  openpgpkey.arthur.getdnsapi.org.<br />
+</code></p>
+<h2>Provisioning your S/MIME certificate and OpenPGP Key</h2>
+<p>
+The <tt>SMIMEA</tt> does not have an allocated type value, but it is structurally identical to <tt>TLSA</tt>.
+It is convenient to use a tool indented for <tt>TLSA</tt> records to construct rdata fields for a <tt>SMIMEA</tt> record.
+For example to create an End-Entity, SHA2-256 TLSA record (usable for verification) for my S/MIME certificate in file <tt>willems-smime-certificate</tt> I can do the following:
+</p>
+<p><code>
+$ ldns-dane -nc willems-smime-certificate.pem  create . 25|sed 's/^.*TLSA/smimecert       TLSA/g'<br />
+smimecert	TLSA	3 0 1 0d880444ff5dfed06902437fb088adf2183d09d00d74436a71fe8e397f77cc5b
+</code></p>
+<p>To create one containing the full certificate::</p>
+<p><code>
+$ ldns-dane -nc willems-smime-certificate.pem  create . 25 domain full no|sed 's/^.*TLSA/smimecert        TLSA/g'<br />
+</code></p>
+<p>
+Instructions on how to provision your OpenPGP key can be found in <a href="http://tools.ietf.org/html/draft-ietf-dane-openpgpkey-00#appendix-A">Appendix A of draft-ietf-dane-openpgpkey-00</a>.  First we need to know the ammount of data:
+</p>
+<p><code>
+$ gpg --export --export-options export-minimal willem@nlnetlabs.nl| wc -c<br />
+3575
+</code></p>
+<p>And then the actual data in hex format:</p>
+<p><code>
+$ gpg --export --export-options export-minimal willem@nlnetlabs.nl \<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| hexdump -e '"\t" /1 "%.2x"' -e '/32 "\n"'
+</code></p>
+<p>Then construct the RR to look like this:</p>
+<p><code>
+openpgpkey TYPE65280 \# <i>&lt;numOctets&gt;</i> <i>&lt;keydata in hex&gt;</i>
+</code></p>
+<p>Example provisioning has been done for Willem Toorop so you can lookup his S/MIME certificate for verification with:</p>
+<p><code>$ dig 77fa5113ab6a532ce2e6901f3bd3351c0db5845e0b1b5fb09907808d._smimecert.getdnsapi.net TYPE52<br />
+; &lt;&lt;&gt;&gt; DiG 9.8.1-P1 &lt;&lt;&gt;&gt; 77fa5113ab6a532ce2e6901f3bd3351c0db5845e0b1b5fb09907808d._smimecert.getdnsapi.net TYPE52<br />
+;; global options: +cmd<br />
+;; Got answer:<br />
+;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 50930<br />
+;; flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 0<br />
+<br />
+;; QUESTION SECTION:<br />
+;77fa5113ab6a532ce2e6901f3bd3351c0db5845e0b1b5fb09907808d._smimecert.getdnsapi.net. IN TYPE52<br />
+<br />
+;; ANSWER SECTION:<br />
+77fa5113ab6a532ce2e6901f3bd3351c0db5845e0b1b5fb09907808d._smimecert.getdnsapi.net. 450 IN CNAME	smimecert.willem.getdnsapi.net.<br />
+smimecert.willem.getdnsapi.net.	3600 IN	TYPE52	\# 35 03010103FA9DA51B00554AB3B7A45BA32307438DD45742C73AC505D9 AFD2F0E6D01224<br />
+<br />
+;; Query time: 25 msec<br />
+;; SERVER: 192.168.178.1#53(192.168.178.1)<br />
+;; WHEN: Thu Apr 17 15:35:33 2014<br />
+;; MSG SIZE  rcvd: 177<br />
+</code></p>
+<p>Or for encryption (i.e. full certificate) with:</p>
+<p><code>$ dig 77fa5113ab6a532ce2e6901f3bd3351c0db5845e0b1b5fb09907808d._smimecert.getdnsapi.org TYPE52</code></p>
+<p>Or his openpgp key with:</p>
+<p><code>$ dig 77fa5113ab6a532ce2e6901f3bd3351c0db5845e0b1b5fb09907808d._openpgpkey.getdnsapi.net TYPE65280</code></p>
+<p>Note the <tt>CNAME</tt>'s</p>
+

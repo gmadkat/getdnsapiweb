@@ -1,0 +1,13 @@
+<h2>getdnsapi Challenge at TNW 2014  Amsterdam</h2>
+<p>Using the Internet is like sending  old-fashioned picture postcards - most of the time the message is easy for  others to read. &nbsp;It's also like taking your shower in the public square  without a curtain -&nbsp;many applications expose you to surveillance; few  applications provide ways to make your communications a bit more private.&nbsp;</p>
+<p>Close the shower curtain, get away  from picture postcards: help users be less exposed when they send Internet  traffic to each other and innovate with DANE, the newest addition to the domain  name system.</p>
+<p>The open source getdnsapi (<a href="http://getdnsapi.net">getdnsapi.net</a>) was designed to enable all kinds  of applications to build innovative security services. The getdnsapi provides easy  access to the global security infrastructure that is the promise of the DNS  security extensions (DNSSEC) and DANE. We challenge the participants in the  2014 TNW Hack Battle in Amsterdam to build privacy enhancing new apps with  getdnsapi.</p>
+<p><img src="gx/kloot2_ca_sm.png" alt="Comic about DANE"></p>
+<p>&nbsp;</p>
+<p>Here are two challenges to start  with, or design your own:</p>
+<ul>
+  <li>Use getdnsapi in conjunction with an  application API, such as Paypal's,  fetch with DANE a public key  of the person you are contacting (e.g. paying) with the API, and encrypt  the&nbsp;messages that will be sent to her or him so that only he/she can read  it. &nbsp;The UI should let&nbsp;your users know they've been protected this  way.&nbsp;</li>
+  <li>Use getdnsapi within an open  source XMPP (jabber) client - fetch with DANE the public keys of the  IM peers and increase their personal privacy. &nbsp;The jabber client UI should  let the users know about their extra privacy.</li>
+</ul>
+<p>We have set up <a href="tnw-infra.html">supporting infrastructure</a> providing securely delegated domains for each participant and means to provision S/MIME certificates and PGP keys.</p>
+<p>Have a look at our <a href="tnw-python.html">python</a>, <a href="tnw-nodejs.html">nodejs</a> and <a href="tnw-c.html">C</a> examples to get you started.</p>
